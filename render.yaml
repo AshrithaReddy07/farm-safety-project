@@ -1,0 +1,42 @@
+services:
+  # FastAPI Backend Web Service
+  - type: web
+    name: farm-safety-backend
+    env: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DEVICE_API_KEY
+        value: dev-key
+      - key: CONFIRM_THRESHOLD
+        value: "0.6"
+      - key: DB_PATH
+        value: events.db
+      - key: FARMER_PHONE
+        sync: false
+      - key: TWILIO_SID
+        sync: false
+      - key: TWILIO_TOKEN
+        sync: false
+      - key: TWILIO_FROM
+        sync: false
+
+  # React Vite Frontend Static Site
+  - type: web
+    name: farm-safety-frontend
+    env: static
+    region: oregon
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false
