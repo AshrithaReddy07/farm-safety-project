@@ -68,37 +68,99 @@ docker compose down
 
 ---
 
-## 3. Cloud Deployment
+---
 
-### A. One-Click Blueprint on Render (Recommended for full stack)
-Both services are defined in `render.yaml`.
-1. Push your repository to GitHub / GitLab.
-2. Sign in to [Render](https://render.com).
-3. Click **New +** -> **Blueprint**.
-4. Connect your repository.
-5. Render will automatically provision:
-   - `farm-safety-backend` (FastAPI Python Web Service)
-   - `farm-safety-frontend` (Static Site with SPA rewrite rules)
-6. Once deployed, set `VITE_API_URL` in the frontend environment to your backend URL (e.g., `https://farm-safety-backend.onrender.com`).
+## 3. GitHub Repository Setup
+
+Before deploying to Railway, your project needs to be hosted on GitHub.
+
+### Step 1: Create a GitHub Repository
+1. Log in to [GitHub](https://github.com) and click **New Repository** (or visit `https://github.com/new`).
+2. Set repository name (e.g., `farm-safety-system` or `farm-safety-project`).
+3. Set visibility to **Public** or **Private**.
+4. **Do NOT check** "Initialize with README", ".gitignore", or "license" (your local project already contains these).
+5. Click **Create repository**.
+
+### Step 2: Push Your Local Code to GitHub
+Open your terminal in the project root (`C:\Users\ashri\Downloads\farm-safety-project`) and run:
+```bash
+# Set your remote repository URL (replace with your GitHub repo URL)
+git remote add origin https://github.com/<YOUR-USERNAME>/<YOUR-REPO-NAME>.git
+
+# Ensure main branch is selected
+git branch -M main
+
+# Push code to GitHub
+git push -u origin main
+```
+*(Or simply run `.\push_to_github.bat` which will prompt for your GitHub URL and push automatically.)*
 
 ---
 
-### B. Frontend on Vercel / Netlify + Backend on Railway / Render
+## 4. Railway Deployment (FastAPI + React Monorepo)
 
-#### Deploy Frontend on Vercel:
-1. Import repository on [Vercel](https://vercel.com).
-2. Set **Root Directory** to `frontend`.
-3. Framework preset: **Vite**.
-4. Add Environment Variable:
-   - `VITE_API_URL`: Your backend URL (e.g., `https://your-backend.up.railway.app`)
-5. Click **Deploy**. SPA client routing is handled by `frontend/vercel.json`.
+Railway is optimized for cloud microservices and provides automated SSL, CI/CD on git push, and persistent disks.
 
-#### Deploy Backend on Railway:
-1. Create a new project on [Railway](https://railway.app).
-2. Select **Deploy from GitHub repo**.
-3. Set **Root Directory** to `backend`.
-4. Railway will automatically detect `Procfile` (`web: uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}`).
-5. Add any necessary environment variables in Railway's Variables tab.
+### Option A: Full-Stack Deployment on Railway (Recommended)
+
+You deploy both the FastAPI backend and React frontend as two services inside one Railway project.
+
+#### 1. Deploy the Backend Service
+1. Log in to [Railway](https://railway.app) (sign in with GitHub).
+2. Click **New Project** -> **Deploy from GitHub repo**.
+3. Select your repository.
+4. When the service card appears, click on it, go to **Settings**:
+   - **Service Name**: Rename to `farm-safety-backend`.
+   - **Root Directory**: Set to `/backend`.
+5. Under **Variables**, add optional keys:
+   - `DEVICE_API_KEY`: `dev-key` (or your secret key)
+   - `CONFIRM_THRESHOLD`: `0.6`
+   - *(Optional Twilio keys)*: `TWILIO_SID`, `TWILIO_TOKEN`, `TWILIO_FROM`, `FARMER_PHONE`
+6. Under **Networking**:
+   - Click **Generate Domain** (e.g., `https://farm-safety-backend.up.railway.app`).
+   - Copy this URL.
+7. *(Optional Persistent Storage)*:
+   - Go to **Volumes** tab -> Click **Add Volume**.
+   - Set mount path: `/data`.
+   - In Variables, set `DB_PATH=/data/events.db` so database records survive redeployments.
+
+#### 2. Deploy the Frontend Service
+1. In the same Railway project canvas, click **+ New** -> **GitHub Repo**.
+2. Select the **same** repository again.
+3. Click the new service card, go to **Settings**:
+   - **Service Name**: Rename to `farm-safety-frontend`.
+   - **Root Directory**: Set to `/frontend`.
+4. Go to **Variables**, add:
+   - `VITE_API_URL`: Your backend URL from step 1 (e.g., `https://farm-safety-backend.up.railway.app`).
+5. Under **Networking**:
+   - Click **Generate Domain** (e.g., `https://farm-safety-frontend.up.railway.app`).
+6. Click the generated frontend URL to open the live Field Watch Dashboard!
+
+---
+
+### Option B: Backend on Railway + Frontend on Vercel
+
+If you want to take advantage of Vercel's global CDN for the frontend:
+
+1. **Backend on Railway**: Follow steps 1-7 in Option A above.
+2. **Frontend on Vercel**:
+   - Go to [Vercel](https://vercel.com) -> **Add New...** -> **Project**.
+   - Select your GitHub repo.
+   - Set **Root Directory** to `frontend`.
+   - Add Environment Variable: `VITE_API_URL` = `https://your-backend.up.railway.app`.
+   - Click **Deploy**.
+
+---
+
+## 5. Other Cloud & Hosting Options
+
+### A. One-Click Blueprint on Render
+Both services are defined in `render.yaml`.
+1. Push your repository to GitHub.
+2. Sign in to [Render](https://render.com).
+3. Click **New +** -> **Blueprint**.
+4. Connect your repository.
+5. Render will automatically provision both backend and frontend.
 
 ---
 

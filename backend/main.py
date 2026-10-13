@@ -81,6 +81,26 @@ def insert(e: EventIn) -> dict:
     return dict(row)
 
 
+@app.get("/")
+def root():
+    return {
+        "status": "online",
+        "service": "Farm Safety API",
+        "docs": "/docs",
+        "endpoints": {
+            "events": "/api/events",
+            "stats": "/api/stats",
+            "live_websocket": "/ws/live",
+            "seed_demo": "/api/demo/seed"
+        }
+    }
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.post("/api/events", status_code=201)
 async def ingest(e: EventIn, x_api_key: str = Header(default="")):
     if x_api_key != API_KEY:
