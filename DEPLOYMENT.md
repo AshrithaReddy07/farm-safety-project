@@ -97,15 +97,38 @@ git push -u origin main
 
 ---
 
-## 4. Railway Deployment (FastAPI + React Monorepo)
+## 4. Railway Deployment
 
-Railway is optimized for cloud microservices and provides automated SSL, CI/CD on git push, and persistent disks.
+Railway offers the fastest way to deploy Field Watch with free SSL, automated CI/CD, and persistent storage.
 
-### Option A: Full-Stack Deployment on Railway (Recommended)
+### Option 0: Instant Railway CLI Deploy (Fastest — 1 Click)
 
-You deploy both the FastAPI backend and React frontend as two services inside one Railway project.
+Run the included automated deployment script right from your project folder:
+- **Windows Batch**: Double-click `deploy_railway.bat`
+- **PowerShell**:
+  ```powershell
+  .\deploy_railway.ps1
+  ```
+*What this does:*
+1. Automatically logs into your Railway account (opens browser on first run).
+2. Builds the unified fullstack container (FastAPI + React Dashboard).
+3. Deploys and automatically assigns a live public domain (e.g. `https://farm-safety.up.railway.app`).
 
-#### 1. Deploy the Backend Service
+---
+
+### Option A: Unified Fullstack Container via GitHub (1-Click)
+
+The repository includes a root `Dockerfile` that builds the React frontend and packages it into FastAPI in a single container:
+1. Log in to [Railway](https://railway.app) (Sign in with GitHub).
+2. Click **New Project** -> **Deploy from GitHub repo**.
+3. Select your `farm-safety-project` repository.
+4. Railway will automatically detect the root `Dockerfile` and `railway.json` and deploy both backend and frontend together!
+5. In **Networking**, click **Generate Domain** to get your public URL.
+
+---
+
+### Option B: Two Independent Services (Microservice Setup)
+
 1. Log in to [Railway](https://railway.app) (sign in with GitHub).
 2. Click **New Project** -> **Deploy from GitHub repo**.
 3. Select your repository.

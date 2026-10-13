@@ -81,8 +81,22 @@ def insert(e: EventIn) -> dict:
     return dict(row)
 
 
+STATIC_DIR = os.getenv("STATIC_DIR")
+if not STATIC_DIR:
+    for _cand in [
+        os.path.join(os.path.dirname(__file__), "static"),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")),
+    ]:
+        if os.path.isdir(_cand) and os.path.exists(os.path.join(_cand, "index.html")):
+            STATIC_DIR = _cand
+            break
+
+
 @app.get("/")
 def root():
+    if STATIC_DIR and os.path.exists(os.path.join(STATIC_DIR, "index.html")):
+        from starlette.responses import FileResponse
+        return FileResponse(os.path.join(STATIC_DIR, "index.html"))
     return {
         "status": "online",
         "service": "Farm Safety API",
@@ -98,7 +112,7 @@ def root():
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "Farm Safety API"}
 
 
 @app.post("/api/events", status_code=201)
@@ -165,3 +179,26 @@ async def live(ws: WebSocket):
     except WebSocketDisconnect:
         if ws in hub.clients:
             hub.clients.remove(ws)
+
+
+# Serve frontend static assets & SPA routes if available
+if STATIC_DIR and os.path.isdir(STATIC_DIR):
+    from fastapi.staticfiles import StaticFiles
+    from starlette.responses import FileResponse
+
+    _assets = os.path.join(STATIC_DIR, "assets")
+    if os.path.isdir(_assets):
+        app.mount("/assets", StaticFiles(directory=_assets), name="assets")
+
+    @app.get("/{full_path:path}")
+    def serve_spa(full_path: str):
+        if full_path.startswith("api/") or full_path.startswith("ws/") or full_path in ("docs", "redoc", "openapi.json", "health"):
+            raise HTTPException(status_code=404, detail="Not Found")
+        file_path = os.path.join(STATIC_DIR, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        index_file = os.path.join(STATIC_DIR, "index.html")
+        if os.path.isfile(index_file):
+            return FileResponse(index_file)
+        raise HTTPException(status_code=404, detail="Not Found")
+
